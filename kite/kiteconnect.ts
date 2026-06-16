@@ -9,6 +9,14 @@ const kc = new KiteConnect({ api_key: apiKey });
 kc.setAccessToken(accessToken);
 
 
+// Zerodha rejects plain MARKET orders via the API ("Market orders without market
+// protection are not allowed"). Passing market_protection satisfies that rule
+// without needing quote data (this account lacks LTP/quote permission, so a
+// priced LIMIT order isn't an option). -1 = automatic protection per Kite's
+// market guidelines. The kiteconnect types don't declare this field, so the
+// params object is widened to allow it; the client forwards it to the API.
+const MARKET_PROTECTION = -1;
+
 export async function buyStock(tradingsymbol: string, quantity: number) {
     try {
         const orderId = await kc.placeOrder('regular', {
@@ -19,7 +27,8 @@ export async function buyStock(tradingsymbol: string, quantity: number) {
             order_type: 'MARKET',
             product: 'CNC',
             validity: 'DAY',
-        });
+            market_protection: MARKET_PROTECTION,
+        } as Parameters<typeof kc.placeOrder>[1]);
         console.log('Buy order placed:', orderId);
         return orderId;
     } catch (err) {
@@ -38,7 +47,8 @@ export async function sellStock(tradingsymbol: string, quantity: number) {
             order_type: 'MARKET',
             product: 'CNC',
             validity: 'DAY',
-        });
+            market_protection: MARKET_PROTECTION,
+        } as Parameters<typeof kc.placeOrder>[1]);
         console.log('Sell order placed:', orderId);
         return orderId;
     } catch (err) {
@@ -67,10 +77,11 @@ async function getProfile() {
     }
 }
 
-async function getPositions() {
+export async function getPositions() {
     try {
         const positions = await kc.getPositions();
         console.log('Positions:', positions);
+        return positions;
     } catch (err) {
         console.error('Error getting positions:', err);
     }

@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { buyStock, sellStock } from "../kite/kiteconnect";
+import { buyStock, sellStock, getPositions } from "../kite/kiteconnect";
 
 // create an MCP server
 const server = new McpServer({
@@ -13,13 +13,23 @@ const server = new McpServer({
 server.registerTool(
   "buy-stock",
   {
+    description:
+      "Place a market BUY order on the NSE for the given trading symbol and quantity.",
     inputSchema: { tradingsymbol: z.string(), quantity: z.number().int().positive() },
   },
   async ({ tradingsymbol, quantity }) => {
-    const orderId = await buyStock(tradingsymbol, quantity);
-    return {
-      content: [{ type: "text", text: `Buy order placed. Order ID: ${String(orderId)}` }],
-    };
+    try {
+      const orderId = await buyStock(tradingsymbol, quantity);
+      return {
+        content: [{ type: "text", text: `Buy order placed. Order ID: ${String(orderId)}` }],
+      };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        content: [{ type: "text", text: `Buy order FAILED: ${msg}` }],
+        isError: true,
+      };
+    }
   },
 );
 
@@ -27,12 +37,37 @@ server.registerTool(
 server.registerTool(
   "sell-stock",
   {
+    description:
+      "Place a market SELL order on the NSE for the given trading symbol and quantity.",
     inputSchema: { tradingsymbol: z.string(), quantity: z.number().int().positive() },
   },
   async ({ tradingsymbol, quantity }) => {
-    const orderId = await sellStock(tradingsymbol, quantity);
+    try {
+      const orderId = await sellStock(tradingsymbol, quantity);
+      return {
+        content: [{ type: "text", text: `Sell order placed. Order ID: ${String(orderId)}` }],
+      };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        content: [{ type: "text", text: `Sell order FAILED: ${msg}` }],
+        isError: true,
+      };
+    }
+  },
+);
+
+// positions tool
+server.registerTool(
+  "get-all-positions",
+  {
+    description:
+      "Get all current open positions in the trading account (net and day positions).",
+  },
+  async () => {
+    const response = await getPositions();
     return {
-      content: [{ type: "text", text: `Sell order placed. Order ID: ${String(orderId)}` }],
+      content: [{ type: "text", text: JSON.stringify(response ?? null) }],
     };
   },
 );
