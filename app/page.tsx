@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   role: "user" | "assistant";
@@ -124,7 +125,13 @@ export default function ChatPage() {
                 <div className="avatar">{m.role === "user" ? "Y" : "◆"}</div>
                 <div className="bubble">
                   {m.content ? (
-                    m.content
+                    m.role === "assistant" ? (
+                      <div className="markdown">
+                        <ReactMarkdown>{m.content}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      m.content
+                    )
                   ) : (
                     <span className="cursor-dots">
                       <span />
