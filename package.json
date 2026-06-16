@@ -11,11 +11,13 @@
   "dependencies": {
     "@langchain/core": "^0.3.40",
     "@langchain/openai": "^0.4.4",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "kiteconnect": "^5.3.0",
     "langchain": "^0.3.19",
     "next": "^15.1.6",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^22.10.7",
