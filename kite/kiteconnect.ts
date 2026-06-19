@@ -17,9 +17,20 @@ kc.setAccessToken(accessToken);
 // params object is widened to allow it; the client forwards it to the API.
 const MARKET_PROTECTION = -1;
 
+// kiteconnect v5+ returns { order_id, children? } instead of a bare id.
+function extractOrderId(result: unknown): string | number {
+    if (result !== null && typeof result === "object" && "order_id" in result) {
+        return (result as { order_id: string | number }).order_id;
+    }
+    if (typeof result === "string" || typeof result === "number") {
+        return result;
+    }
+    throw new Error(`Unexpected placeOrder response: ${JSON.stringify(result)}`);
+}
+
 export async function buyStock(tradingsymbol: string, quantity: number) {
     try {
-        const orderId = await kc.placeOrder('regular', {
+        const response = await kc.placeOrder('regular', {
             exchange: 'NSE',
             tradingsymbol,
             transaction_type: 'BUY',
@@ -29,6 +40,7 @@ export async function buyStock(tradingsymbol: string, quantity: number) {
             validity: 'DAY',
             market_protection: MARKET_PROTECTION,
         } as Parameters<typeof kc.placeOrder>[1]);
+        const orderId = extractOrderId(response);
         console.log('Buy order placed:', orderId);
         return orderId;
     } catch (err) {
@@ -39,7 +51,7 @@ export async function buyStock(tradingsymbol: string, quantity: number) {
 
 export async function sellStock(tradingsymbol: string, quantity: number) {
     try {
-        const orderId = await kc.placeOrder('regular', {
+        const response = await kc.placeOrder('regular', {
             exchange: 'NSE',
             tradingsymbol,
             transaction_type: 'SELL',
@@ -49,6 +61,7 @@ export async function sellStock(tradingsymbol: string, quantity: number) {
             validity: 'DAY',
             market_protection: MARKET_PROTECTION,
         } as Parameters<typeof kc.placeOrder>[1]);
+        const orderId = extractOrderId(response);
         console.log('Sell order placed:', orderId);
         return orderId;
     } catch (err) {
