@@ -17,6 +17,10 @@ kc.setAccessToken(accessToken);
 // params object is widened to allow it; the client forwards it to the API.
 const MARKET_PROTECTION = -1;
 
+// NSE trading hours
+const NSE_OPEN_HOUR = 9;
+const NSE_CLOSE_HOUR = 15;
+
 // kiteconnect v5+ returns { order_id, children? } instead of a bare id.
 function extractOrderId(result: unknown): string | number {
     if (result !== null && typeof result === "object" && "order_id" in result) {
@@ -28,9 +32,15 @@ function extractOrderId(result: unknown): string | number {
     throw new Error(`Unexpected placeOrder response: ${JSON.stringify(result)}`);
 }
 
+function getOrderType(): string {
+    const currentHour = new Date().getHours();
+    return (currentHour < NSE_OPEN_HOUR || currentHour >= NSE_CLOSE_HOUR) ? 'amo' : 'regular';
+}
+
 export async function buyStock(tradingsymbol: string, quantity: number) {
     try {
-        const response = await kc.placeOrder('regular', {
+        const orderType = getOrderType();
+        const response = await kc.placeOrder(orderType, {
             exchange: 'NSE',
             tradingsymbol,
             transaction_type: 'BUY',
@@ -51,7 +61,8 @@ export async function buyStock(tradingsymbol: string, quantity: number) {
 
 export async function sellStock(tradingsymbol: string, quantity: number) {
     try {
-        const response = await kc.placeOrder('regular', {
+        const orderType = getOrderType();
+        const response = await kc.placeOrder(orderType, {
             exchange: 'NSE',
             tradingsymbol,
             transaction_type: 'SELL',
